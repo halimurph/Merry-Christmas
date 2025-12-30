@@ -616,10 +616,14 @@ x<!doctype html>
           const val = (document.getElementById("ans3").value || "").trim().toLowerCase();
           const ok = val === String(CONFIG.code3).toLowerCase();
           if(ok){
-            state.solved[3] = true;
-            saveState();
-            setStage("vault");
-          }else{
+  state.solved[3] = true;
+
+  // Force vault to open on NAME GRID (not Grandpa)
+  state.vaultView = { mode: "people", personKey: null };
+
+  saveState();
+  setStage("vault");
+}else{
             document.getElementById("msg").innerHTML =
               `<span style="color:var(--bad)">Not quite.</span> Try the gentlest version of the truth.`;
           }
