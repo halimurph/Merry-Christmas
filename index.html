@@ -627,11 +627,13 @@ x<!doctype html>
         return;
       }
 
-      if(state.stage === "vault"){
-        const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
-        if(!state.vaultView) state.vaultView = { mode: "gallery", personKey: "grandpa" };
+     if(state.stage === "vault"){
+  const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
 
-        const view = state.vaultView;
+  // Default vault landing = people list (NOT grandpa gallery)
+  if(!state.vaultView) state.vaultView = { mode: "people", personKey: null };
+
+  const view = state.vaultView;
 
         // PEOPLE LIST view (optional; you can keep later)
         if(view.mode === "people"){
