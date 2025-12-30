@@ -1,4 +1,5 @@
 <!doctype html>
+document.getElementById("pillText").textContent = "js running";
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -583,22 +584,27 @@ You don’t get a vote. It’s happening.`
     saveState();
   }
 
-    render();
-  } catch (e) {
-    console.error(e);
-    const app = document.getElementById("app");
-    if (app) {
-      app.innerHTML = `
+      render();
+} catch (e) {
+  console.error(e);
+  const app = document.getElementById("app");
+  const pill = document.getElementById("pillText");
+  if (pill) pill.textContent = "error";
+  if (app) {
+    app.innerHTML = `
+      <div style="padding:22px">
         <h1 style="margin:0 0 10px;">Script crashed</h1>
-        <p style="color:#a8b0c6; line-height:1.6;">
-          Open DevTools Console to see the error.<br/>
-          <span style="opacity:.8">Most likely: a typo in CONFIG (quotes/backticks/braces).</span>
+        <p style="color:#a8b0c6; line-height:1.6; margin:0 0 12px;">
+          Your JS is failing, so the page content never renders.
+          <br/>Here’s the exact error:
         </p>
-        <pre style="white-space:pre-wrap; background:rgba(0,0,0,.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); color:#e8ecf7;">${'${String(e)}'}</pre>
-      `;
-    }
+        <pre style="white-space:pre-wrap; background:rgba(0,0,0,.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); color:#e8ecf7; margin:0;">${String(e)}</pre>
+      </div>
+    `;
   }
+}
 })();
+
 
 </script>
 </body>
