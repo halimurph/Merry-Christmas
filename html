@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tap to Unlock</title>
+  <meta name="description" content="A small scavenger hunt that unlocks something real." />
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --card:#111521;
+      --card2:#0f1320;
+      --text:#e8ecf7;
+      --muted:#a8b0c6;
+      --line:rgba(232,236,247,.12);
+      --accent:#c9d4ff;
+      --ok:#b7ffda;
+      --bad:#ffb7c8;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 30% 10%, rgba(201,212,255,.10), transparent 55%),
+                  radial-gradient(900px 600px at 70% 75%, rgba(183,255,218,.08), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{width:min(900px, 100%); }
+    .top{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:14px;
+      gap:12px;
+    }
+    .brand{
+      font-size:12px; letter-spacing:.28em; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .pill{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line);
+      padding:8px 10px;
+      border-radius:999px;
+      display:flex; align-items:center; gap:10px;
+      background: rgba(17,21,33,.35);
+      backdrop-filter: blur(8px);
+    }
+    .dot{width:8px;height:8px;border-radius:50%; background: rgba(201,212,255,.55)}
+    .card{
+      background: linear-gradient(180deg, rgba(17,21,33,.92), rgba(15,19,32,.82));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .inner{padding:22px}
+    h1{
+      margin:0 0 10px;
+      font-weight:650;
+      letter-spacing:-.02em;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height:1.15;
+    }
+    p{margin:0 0 14px; color:var(--muted); line-height:1.55}
+    .divider{height:1px; background:var(--line); margin:18px 0}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+    .btn{
+      border:1px solid var(--line);
+      color:var(--text);
+      background: rgba(232,236,247,.05);
+      padding:12px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(232,236,247,.08)}
+    .btn:active{transform: translateY(0px) scale(.99)}
+    .btn.primary{
+      border-color: rgba(201,212,255,.25);
+      background: rgba(201,212,255,.10);
+    }
+    .btn.ghost{
+      background: transparent;
+    }
+    .btn.good{
+      border-color: rgba(183,255,218,.25);
+      background: rgba(183,255,218,.10);
+    }
+    .btn.bad{
+      border-color: rgba(255,183,200,.25);
+      background: rgba(255,183,200,.10);
+    }
+    .small{font-size:13px}
+    .input{
+      width:min(520px, 100%);
+      padding:12px 14px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      color:var(--text);
+      outline:none;
+    }
+    .input:focus{
+      border-color: rgba(201,212,255,.35);
+      box-shadow: 0 0 0 4px rgba(201,212,255,.08);
+    }
+    .hint{
+      font-size:13px;
+      color: rgba(168,176,198,.95);
+      border-left: 2px solid rgba(201,212,255,.25);
+      padding:10px 12px;
+      background: rgba(201,212,255,.06);
+      border-radius: 12px;
+    }
+    .status{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .progress{
+      display:flex; gap:8px; align-items:center;
+    }
+    .step{
+      width: 26px; height: 6px;
+      border-radius: 999px;
+      background: rgba(232,236,247,.10);
+      border:1px solid rgba(232,236,247,.10);
+      overflow:hidden;
+    }
+    .step.on{
+      background: rgba(201,212,255,.35);
+      border-color: rgba(201,212,255,.25);
+    }
+    .fade-in{animation: fade .28s ease both}
+    @keyframes fade{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+    .vault-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:12px;
+    }
+    @media (max-width:720px){
+      .vault-grid{grid-template-columns: 1fr}
+    }
+    .drawer{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0,0,0,.12);
+      padding:14px;
+      min-height: 92px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      position: relative;
+      overflow:hidden;
+    }
+    .drawer:hover{transform: translateY(-1px); background: rgba(232,236,247,.06)}
+    .drawer h3{margin:0 0 6px; font-size:14px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+    .drawer .label{font-size:16px; margin:0; color:var(--text)}
+    .drawer .lock{
+      position:absolute; right:12px; top:12px;
+      font-size:12px; color: rgba(168,176,198,.9);
+      border:1px solid var(--line);
+      padding:6px 8px; border-radius: 999px;
+      background: rgba(17,21,33,.45);
+    }
+    .contentbox{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0,0,0,.12);
+      padding:16px;
+    }
+    .footer{
+      margin-top:12px;
+      display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+      color: var(--muted);
+      font-size:12px;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">PRIVATE ACCESS</div>
+      <div class="pill"><span class="dot"></span><span id="pillText">ready</span></div>
+    </div>
+
+    <div class="card">
+      <div class="inner" id="app"></div>
+    </div>
+
+    <div class="footer">
+      <div>Tip: If you want this editable later, link your NFC to a redirect URL.</div>
+      <button class="btn ghost small" id="resetBtn" title="Reset this experience">reset</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // ====== EDIT THESE (PERSONALIZE) ======
+  const CONFIG = {
+    recipientName: "you", // ex: "Hali" or "Friend"
+    // three scavenger answers (case-insensitive). Keep them simple.
+    code1: "east",
+    code2: "7",
+    code3: "soft light",
+    // Vault content
+    vault: {
+      memoryTitle: "A memory",
+      memoryBody: `We both know there are moments that look small from the outside,
+but they permanently rearrange something on the inside.
+
+This is one of them.
+
+(Replace this with your real memory. Add a photo link if you want.)`,
+      truthTitle: "A truth",
+      truthBody: `I notice the parts of you that other people miss.
+Not the loud parts. The real parts.
+
+And I’m not saying that lightly.`,
+      nextTitle: "What’s next",
+      nextBody: `If you want, we make something happen soon.
+Not “someday.”
+A real plan.
+
+You pick the day. I’ll show up.`
+    },
+    // Optional: embed audio/video (leave blank to hide)
+    embedUrl: "" // ex: "https://www.youtube.com/embed/VIDEO_ID" or Vimeo embed
+  };
+
+  // ====== STATE ======
+  const KEY = "nfc_gift_state_v1";
+  const defaultState = {
+    stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
+    solved: {1:false,2:false,3:false},
+    opened: {memory:false, truth:false, next:false}
+  };
+
+  let state = loadState();
+  const app = document.getElementById("app");
+  const pillText = document.getElementById("pillText");
+  const resetBtn = document.getElementById("resetBtn");
+
+  resetBtn.addEventListener("click", () => {
+    localStorage.removeItem(KEY);
+    state = JSON.parse(JSON.stringify(defaultState));
+    render();
+  });
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return JSON.parse(JSON.stringify(defaultState));
+      const parsed = JSON.parse(raw);
+      return {...defaultState, ...parsed};
+    }catch(e){
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+  }
+  function saveState(){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function setStage(stage){
+    state.stage = stage;
+    saveState();
+    render();
+  }
+
+  function progressCount(){
+    return (state.solved[1]?1:0) + (state.solved[2]?1:0) + (state.solved[3]?1:0);
+  }
+
+  function renderProgress(){
+    const n = progressCount();
+    return `
+      <div class="status">
+        <div class="progress" aria-label="progress">
+          <div class="step ${n>=1?'on':''}"></div>
+          <div class="step ${n>=2?'on':''}"></div>
+          <div class="step ${n>=3?'on':''}"></div>
+        </div>
+        <div>${n}/3 unlocked</div>
+      </div>
+    `;
+  }
+
+  function render(){
+    const n = progressCount();
+    pillText.textContent = (state.stage === "vault") ? "vault open" : (n === 0 ? "begin" : `${n}/3 unlocked`);
+
+    if(state.stage === "intro"){
+      app.innerHTML = `
+        <div class="fade-in">
+          <h1>This is for ${escapeHtml(CONFIG.recipientName)}.</h1>
+          <p>Not everyone gets access. If you’re here, it’s because someone wanted you to find this.</p>
+
+          <div class="divider"></div>
+
+          <div class="hint">
+            One rule: don’t rush it.<br/>
+            If you try to “speedrun” this, you’ll miss what it’s for.
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <button class="btn primary" id="startBtn">start</button>
+            <button class="btn ghost" id="skipBtn" title="Skip straight to the vault (if you want)">skip</button>
+          </div>
+
+          ${renderProgress()}
+        </div>
+      `;
+      document.getElementById("startBtn").onclick = () => setStage("hunt1");
+      document.getElementById("skipBtn").onclick = () => setStage("vault");
+      return;
+    }
+
+    if(state.stage === "hunt1"){
+      app.innerHTML = `
+        <div class="fade-in">
+          <h1>Lock 1</h1>
+          <p>Choose a direction. Not the obvious one.</p>
+
+          <div class="divider"></div>
+
+          <div class="hint">
+            Answer with one word.<br/>
+            It’s the direction the light comes from when you stop staring at the noise.
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <input class="input mono" id="ans1" placeholder="type here…" autocomplete="off" />
+            <button class="btn good" id="check1">unlock</button>
+          </div>
+
+          <div id="msg" class="status"></div>
+          ${renderProgress()}
+
+          <div class="divider"></div>
+          <div class="row">
+            <button class="btn ghost small" id="back">back</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("back").onclick = () => setStage("intro");
+      document.getElementById("check1").onclick = () => {
+        const val = (document.getElementById("ans1").value || "").trim().toLowerCase();
+        const ok = val === CONFIG.code1.toLowerCase();
+        feedback(ok, 1, "hunt2", "Close. Try simpler.");
+      };
+      return;
+    }
+
+    if(state.stage === "hunt2"){
+      app.innerHTML = `
+        <div class="fade-in">
+          <h1>Lock 2</h1>
+          <p>This one’s about attention.</p>
+
+          <div class="divider"></div>
+
+          <div class="hint">
+            Enter the number that shows up when you think of the day this became real.
+            <br/><span style="opacity:.75">(If you’re unsure, guess. The point is the choice.)</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <input class="input mono" id="ans2" placeholder="a single number…" inputmode="numeric" autocomplete="off" />
+            <button class="btn good" id="check2">unlock</button>
+          </div>
+
+          <div id="msg" class="status"></div>
+          ${renderProgress()}
+
+          <div class="divider"></div>
+          <div class="row">
+            <button class="btn ghost small" id="back">back</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("back").onclick = () => setStage("hunt1");
+      document.getElementById("check2").onclick = () => {
+        const val = (document.getElementById("ans2").value || "").trim().toLowerCase();
+        const ok = val === CONFIG.code2.toLowerCase();
+        feedback(ok, 2, "hunt3", "Not that. Try the number you didn’t want to say.");
+      };
+      return;
+    }
+
+    if(state.stage === "hunt3"){
+      app.innerHTML = `
+        <div class="fade-in">
+          <h1>Lock 3</h1>
+          <p>Last one. Say it like you mean it.</p>
+
+          <div class="divider"></div>
+
+          <div class="hint">
+            Two words. No punctuation.<br/>
+            It’s what you feel when the world goes quiet and you don’t need to perform.
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <input class="input mono" id="ans3" placeholder="two words…" autocomplete="off" />
+            <button class="btn good" id="check3">unlock</button>
+          </div>
+
+          <div id="msg" class="status"></div>
+          ${renderProgress()}
+
+          <div class="divider"></div>
+          <div class="row">
+            <button class="btn ghost small" id="back">back</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("back").onclick = () => setStage("hunt2");
+      document.getElementById("check3").onclick = () => {
+        const val = (document.getElementById("ans3").value || "").trim().toLowerCase();
+        const ok = val === CONFIG.code3.toLowerCase();
+        if(ok){
+          state.solved[3] = true;
+          saveState();
+          setStage("vault");
+        }else{
+          const msg = document.getElementById("msg");
+          msg.innerHTML = `<span style="color:var(--bad)">Not quite.</span> Try the gentlest version of the truth.`;
+        }
+      };
+      return;
+    }
+
+    if(state.stage === "vault"){
+      const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
+      app.innerHTML = `
+        <div class="fade-in">
+          <h1>Vault</h1>
+          <p>${allSolved ? "You earned this." : "You can open it anyway. The point wasn’t the locks."}</p>
+
+          ${CONFIG.embedUrl ? `
+            <div class="divider"></div>
+            <div class="contentbox">
+              <p class="small" style="margin-bottom:10px;color:var(--muted)">Press play when you’re ready.</p>
+              <div style="position:relative; padding-top:56.25%;">
+                <iframe
+                  src="${escapeAttr(CONFIG.embedUrl)}"
+                  style="position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:14px;"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allowfullscreen
+                  title="Embedded message"
+                ></iframe>
+              </div>
+            </div>
+          ` : ""}
+
+          <div class="divider"></div>
+
+          <div class="vault-grid">
+            ${drawer("memory", CONFIG.vault.memoryTitle, "Open the moment.", state.opened.memory)}
+            ${drawer("truth",  CONFIG.vault.truthTitle,  "Open what’s real.", state.opened.truth)}
+            ${drawer("next",   CONFIG.vault.nextTitle,   "Open what’s next.", state.opened.next)}
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="contentbox" id="vaultContent">
+            <p class="small" style="margin:0;color:var(--muted)">Choose a drawer.</p>
+          </div>
+
+          <div class="divider"></div>
+          <div class="row">
+            <button class="btn ghost small" id="back">back</button>
+            <button class="btn primary small" id="finish">close</button>
+          </div>
+
+          <div class="status">
+            <span class="mono" style="opacity:.7">access:</span>
+            <span style="opacity:.9">${allSolved ? "verified" : "unverified"}</span>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("back").onclick = () => {
+        // go to last unsolved stage if any, else hunt3
+        if(!state.solved[1]) return setStage("hunt1");
+        if(!state.solved[2]) return setStage("hunt2");
+        if(!state.solved[3]) return setStage("hunt3");
+        setStage("hunt3");
+      };
+      document.getElementById("finish").onclick = () => setStage("intro");
+
+      // drawer handlers
+      ["memory","truth","next"].forEach(key=>{
+        document.getElementById(`drawer_${key}`).onclick = () => openDrawer(key);
+      });
+      return;
+    }
+  }
+
+  function drawer(key, title, subtitle, opened){
+    return `
+      <div class="drawer" id="drawer_${key}" role="button" tabindex="0" aria-label="${escapeAttr(title)}">
+        <div class="lock">${opened ? "open" : "locked"}</div>
+        <h3>${escapeHtml(title)}</h3>
+        <p class="label">${escapeHtml(subtitle)}</p>
+      </div>
+    `;
+  }
+
+  function openDrawer(key){
+    state.opened[key] = true;
+    saveState();
+
+    const content = document.getElementById("vaultContent");
+    let t="", b="";
+    if(key==="memory"){ t = CONFIG.vault.memoryTitle; b = CONFIG.vault.memoryBody; }
+    if(key==="truth"){ t = CONFIG.vault.truthTitle; b = CONFIG.vault.truthBody; }
+    if(key==="next"){ t = CONFIG.vault.nextTitle; b = CONFIG.vault.nextBody; }
+
+    content.innerHTML = `
+      <h2 style="margin:0 0 8px; font-size:18px; letter-spacing:-.01em;">${escapeHtml(t)}</h2>
+      <p style="white-space:pre-wrap; margin:0; color:var(--text); line-height:1.6;">${escapeHtml(b)}</p>
+    `;
+
+    // Update lock badges without full rerender
+    document.querySelector(`#drawer_${key} .lock`).textContent = "open";
+  }
+
+  function feedback(ok, lockNum, nextStage, wrongCopy){
+    const msg = document.getElementById("msg");
+    if(ok){
+      state.solved[lockNum] = true;
+      saveState();
+      msg.innerHTML = `<span style="color:var(--ok)">Unlocked.</span> Don’t rush.`;
+      setTimeout(()=> setStage(nextStage), 520);
+    }else{
+      msg.innerHTML = `<span style="color:var(--bad)">No.</span> ${wrongCopy}`;
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    })[s]);
+  }
+  function escapeAttr(str){
+    return escapeHtml(str).replace(/`/g, "&#96;");
+  }
+
+  // Auto-mark prior locks if user skipped around
+  // (if they return to a lock after solving, keep it solved)
+  // Nothing fancy needed—render() uses state.
+
+  // Set stage to vault automatically if all solved
+  if(state.solved[1] && state.solved[2] && state.solved[3] && state.stage !== "vault"){
+    state.stage = "vault";
+    saveState();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
