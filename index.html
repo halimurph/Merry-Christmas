@@ -8,8 +8,6 @@
   <style>
     :root{
       --bg:#0b0d12;
-      --card:#111521;
-      --card2:#0f1320;
       --text:#e8ecf7;
       --muted:#a8b0c6;
       --line:rgba(232,236,247,.12);
@@ -126,7 +124,6 @@
       border-radius: 999px;
       background: rgba(232,236,247,.10);
       border:1px solid rgba(232,236,247,.10);
-      overflow:hidden;
     }
     .step.on{
       background: rgba(201,212,255,.35);
@@ -138,7 +135,7 @@
       to{opacity:1; transform: translateY(0)}
     }
 
-    /* Cards grid */
+    /* Grid cards */
     .vault-grid{
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -176,7 +173,7 @@
     }
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
 
-    /* ===== Modal + Flip ===== */
+    /* Modal + Flip */
     .modal{
       position: fixed;
       inset: 0;
@@ -236,7 +233,7 @@
     .modalFront p{ margin:10px 0 0; color:var(--text); }
 
     .modalBack{ display:flex; flex-direction: column; }
-    .modalImgWrap{
+    .modalMediaWrap{
       width:100%;
       aspect-ratio: 16/10;
       background: rgba(0,0,0,.18);
@@ -244,7 +241,12 @@
       align-items:center;
       justify-content:center;
     }
-    .modalImg{ width:100%; height:100%; object-fit: contain; }
+    .modalMedia{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+    }
     .modalCaption{
       border-top:1px solid var(--line);
       padding:14px 16px;
@@ -273,22 +275,22 @@
 
   <!-- Modal -->
   <div class="modal" id="modal">
-    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Media viewer">
       <div class="modalTopBar">
         <div class="title" id="modalTitle">PHOTO</div>
         <button class="btn ghost small" id="closeModal">close</button>
       </div>
 
       <div class="flipWrap" id="flipWrap">
+        <!-- FRONT -->
         <div class="flipFace modalFront">
           <h2 id="frontLabel">Pic</h2>
           <p id="frontHint">tap to reveal</p>
         </div>
 
+        <!-- BACK -->
         <div class="flipFace flipBack modalBack">
-          <div class="modalImgWrap">
-            <img class="modalImg" id="modalImg" alt="Selected photo" />
-          </div>
+          <div class="modalMediaWrap" id="modalMediaWrap"></div>
           <div class="modalCaption" id="modalCaption"></div>
         </div>
       </div>
@@ -305,37 +307,37 @@
       code2: "1",
       code3: "chaos mode",
 
-      // Images are in repo ROOT (same folder as index.html)
+      // Files are in repo ROOT (same folder as index.html)
       people: [
-        { key:"peachy", name:"Peachy", photos:[
-          { src:"peachy1.jpg", caption:"Peachy being Peachy." },
-          { src:"peachy2.jpg", caption:"Iconic. No notes." }
-        ]},
-        { key:"kevin", name:"Kevin", photos:[
-          { src:"kevin1.jpg", caption:"Kevin in his natural habitat." }
-        ]},
-        { key:"rana", name:"Rana", photos:[
-          { src:"rana1.jpg", caption:"Main character energy." }
-        ]},
-        { key:"pat", name:"Pat", photos:[
-          { src:"pat1.jpg", caption:"Pat, holding the family together." }
-        ]},
-        { key:"karen", name:"Karen", photos:[
-          { src:"karen1.jpg", caption:"Queen behavior, always." }
-        ]},
-        { key:"grandpa", name:"Grandpa", photos:[
-          { src:"grandpa1.jpg", caption:"The original legend." },
-          { src:"grandpa2.jpg", caption:"Frame this immediately." }
-        ]}
+        {
+          key:"grandpa",
+          name:"Grandpa",
+          photos:[
+            { src:"grandpa1.mov", caption:"eWe senpai grammpy" },
+            { src:"grandpa2.jpg", caption:"korban and grandpa big chillin" },
+            { src:"grandpa3.JPG", caption:"I wonder who is who" },
+            { src:"grandpa4.JPG", caption:"our younger days" },
+            { src:"grandpa5.jpg", caption:"can you help me take off my shirt??" }, /* HEIC may not display on many devices */
+            { src:"grandpa6.mov", caption:"TYLER" },
+            { src:"grandpa7.JPG", caption:"aw" }
+          ]
+        },
+
+        /* Keep these as placeholders for later (edit when you have files) */
+        { key:"peachy", name:"Peachy", photos:[] },
+        { key:"kevin",  name:"Kevin",  photos:[] },
+        { key:"rana",   name:"Rana",   photos:[] },
+        { key:"pat",    name:"Pat",    photos:[] },
+        { key:"karen",  name:"Karen",  photos:[] }
       ]
     };
 
     // ====== STATE ======
-    const KEY = "nfc_gift_state_v2";
+    const KEY = "nfc_gift_state_v3";
     const defaultState = {
       stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
       solved: {1:false,2:false,3:false},
-      vaultView: { mode: "people", personKey: null } // people | gallery
+      vaultView: { mode: "gallery", personKey: "grandpa" } // people | gallery
     };
 
     let state = loadState();
@@ -355,12 +357,18 @@
         const raw = localStorage.getItem(KEY);
         if(!raw) return JSON.parse(JSON.stringify(defaultState));
         const parsed = JSON.parse(raw);
-        return {
+        const merged = {
           ...defaultState,
           ...parsed,
           solved: {...defaultState.solved, ...(parsed.solved || {})},
           vaultView: parsed.vaultView || defaultState.vaultView
         };
+
+        // Force default to Grandpa gallery if missing
+        if(!merged.vaultView || !merged.vaultView.personKey){
+          merged.vaultView = { mode: "gallery", personKey: "grandpa" };
+        }
+        return merged;
       }catch(e){
         return JSON.parse(JSON.stringify(defaultState));
       }
@@ -546,10 +554,11 @@
 
       if(state.stage === "vault"){
         const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
+        if(!state.vaultView) state.vaultView = { mode: "gallery", personKey: "grandpa" };
 
-        if(!state.vaultView) state.vaultView = { mode: "people", personKey: null };
         const view = state.vaultView;
 
+        // PEOPLE LIST view (optional; you can keep later)
         if(view.mode === "people"){
           app.innerHTML = `
             <div class="fade-in">
@@ -561,7 +570,7 @@
               <div class="vault-grid">
                 ${CONFIG.people.map(p => `
                   <div class="drawer" id="person_${p.key}" role="button" tabindex="0">
-                    <div class="lock">${p.photos.length} pic${p.photos.length === 1 ? "" : "s"}</div>
+                    <div class="lock">${p.photos.length} item${p.photos.length === 1 ? "" : "s"}</div>
                     <h3>${escapeHtml(p.name)}</h3>
                     <p class="label">Open.</p>
                   </div>
@@ -599,25 +608,20 @@
           return;
         }
 
+        // GALLERY view (Grandpa default)
         if(view.mode === "gallery"){
-          const person = CONFIG.people.find(p => p.key === view.personKey);
-          if(!person){
-            state.vaultView = { mode: "people", personKey: null };
-            saveState();
-            render();
-            return;
-          }
+          const person = CONFIG.people.find(p => p.key === view.personKey) || CONFIG.people[0];
 
           app.innerHTML = `
             <div class="fade-in">
               <h1>${escapeHtml(person.name)}</h1>
-              <p>Choose a pic.</p>
+              <p>Choose a memory.</p>
 
               <div class="divider"></div>
 
               <div class="vault-grid">
                 ${person.photos.map((ph, idx) => `
-                  <div class="drawer" id="pic_${idx}" role="button" tabindex="0">
+                  <div class="drawer" id="item_${idx}" role="button" tabindex="0">
                     <div class="lock">tap</div>
                     <h3>Pic ${idx + 1}</h3>
                     <p class="label">Flip it.</p>
@@ -628,13 +632,13 @@
               <div class="divider"></div>
 
               <div class="row">
-                <button class="btn ghost small" id="backToPeople">back</button>
+                <button class="btn ghost small" id="peopleBtn">names</button>
                 <button class="btn primary small" id="finish">close</button>
               </div>
             </div>
           `;
 
-          document.getElementById("backToPeople").onclick = () => {
+          document.getElementById("peopleBtn").onclick = () => {
             state.vaultView = { mode: "people", personKey: null };
             saveState();
             render();
@@ -642,9 +646,9 @@
           document.getElementById("finish").onclick = () => setStage("intro");
 
           person.photos.forEach((ph, idx) => {
-            const el = document.getElementById(`pic_${idx}`);
+            const el = document.getElementById(`item_${idx}`);
             if(el){
-              el.onclick = () => openPhotoModal(person.name, idx + 1, ph.src, ph.caption);
+              el.onclick = () => openMediaModal(person.name, idx + 1, ph.src, ph.caption);
             }
           });
 
@@ -653,44 +657,77 @@
       }
     }
 
-    function openPhotoModal(personName, picNumber, src, caption){
+    function isVideo(src){
+      return /\.(mov|mp4|webm)$/i.test(src);
+    }
+
+    function openMediaModal(personName, index, src, caption){
       const modal = document.getElementById("modal");
       const flipWrap = document.getElementById("flipWrap");
       const modalTitle = document.getElementById("modalTitle");
       const frontLabel = document.getElementById("frontLabel");
-      const modalImg = document.getElementById("modalImg");
+      const modalMediaWrap = document.getElementById("modalMediaWrap");
       const modalCaption = document.getElementById("modalCaption");
 
-      modalTitle.textContent = `${personName} • PIC ${picNumber}`;
-      frontLabel.textContent = `Pic ${picNumber}`;
-      modalImg.src = src;
+      modalTitle.textContent = `${personName} • ${isVideo(src) ? "VIDEO" : "PIC"} ${index}`;
+      frontLabel.textContent = isVideo(src) ? `Video ${index}` : `Pic ${index}`;
       modalCaption.textContent = caption || "";
 
+      // Reset flip + media
       flipWrap.classList.remove("flipped");
+      modalMediaWrap.innerHTML = "";
+
+      if(isVideo(src)){
+        const v = document.createElement("video");
+        v.src = src;
+        v.className = "modalMedia";
+        v.autoplay = true;
+        v.loop = true;
+        v.muted = true;
+        v.playsInline = true;
+        v.controls = false;
+        modalMediaWrap.appendChild(v);
+      }else{
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = caption || "Selected image";
+        img.className = "modalMedia";
+        modalMediaWrap.appendChild(img);
+      }
+
       modal.classList.add("on");
 
-      flipWrap.onclick = () => flipWrap.classList.toggle("flipped");
+      // Flip handler (tap anywhere on card)
+      flipWrap.onclick = () => {
+        flipWrap.classList.toggle("flipped");
+        // If flipping back to front, pause video (optional)
+        const vid = modalMediaWrap.querySelector("video");
+        if(vid && !flipWrap.classList.contains("flipped")) vid.pause();
+        if(vid && flipWrap.classList.contains("flipped")) vid.play().catch(()=>{});
+      };
     }
 
-    function closePhotoModal(){
+    function closeMediaModal(){
       const modal = document.getElementById("modal");
       const flipWrap = document.getElementById("flipWrap");
-      const modalImg = document.getElementById("modalImg");
-      const modalCaption = document.getElementById("modalCaption");
+      const modalMediaWrap = document.getElementById("modalMediaWrap");
+
+      // stop video if any
+      const vid = modalMediaWrap.querySelector("video");
+      if(vid) vid.pause();
 
       modal.classList.remove("on");
       flipWrap.classList.remove("flipped");
-      modalImg.src = "";
-      modalCaption.textContent = "";
+      modalMediaWrap.innerHTML = "";
     }
 
-    document.getElementById("closeModal").onclick = closePhotoModal;
+    document.getElementById("closeModal").onclick = closeMediaModal;
     document.getElementById("modal").addEventListener("click", (e) => {
-      if(e.target && e.target.id === "modal") closePhotoModal();
+      if(e.target && e.target.id === "modal") closeMediaModal();
     });
     document.addEventListener("keydown", (e) => {
       const modal = document.getElementById("modal");
-      if(e.key === "Escape" && modal.classList.contains("on")) closePhotoModal();
+      if(e.key === "Escape" && modal.classList.contains("on")) closeMediaModal();
     });
 
     function feedback(ok, lockNum, nextStage, wrongCopy){
