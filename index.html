@@ -410,7 +410,7 @@ code5: "Salute the cake",
     };
 
     // ====== STATE ======
-    const KEY = "nfc_gift_state_v3";
+    const KEY = "nfc_gift_state_v4";
     const defaultState = {
   stage: "hunt1",
   solved: {1:false,2:false,3:false,4:false,5:false},
@@ -619,12 +619,8 @@ code5: "Salute the cake",
           const ok = val === String(CONFIG.code3).toLowerCase();
           if(ok){
   state.solved[3] = true;
-
-  // Force vault to open on NAME GRID (not Grandpa)
-  state.vaultView = { mode: "people", personKey: null };
-
   saveState();
-  setStage("vault");
+  setStage("hunt4");
 }else{
             document.getElementById("msg").innerHTML =
               `<span style="color:var(--bad)">Not quite.</span> Try the gentlest version of the truth.`;
@@ -632,6 +628,94 @@ code5: "Salute the cake",
         };
         return;
       }
+      if(state.stage === "hunt4"){
+  app.innerHTML = `
+    <div class="fade-in">
+      <h1>Lock 4</h1>
+      <p>Which school did all three Murphy boys attend?</p>
+
+      <div class="divider"></div>
+
+      <div class="hint">
+        Two words. No punctuation.
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <input class="input mono" id="ans4" placeholder="type here…" autocomplete="off" />
+        <button class="btn good" id="check4">unlock</button>
+      </div>
+
+      <div id="msg" class="status"></div>
+      ${renderProgress()}
+
+      <div class="divider"></div>
+      <div class="row">
+        <button class="btn ghost small" id="back">back</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("back").onclick = () => setStage("hunt3");
+  document.getElementById("check4").onclick = () => {
+    const val = (document.getElementById("ans4").value || "").trim().toLowerCase();
+    const ok = val === String(CONFIG.code4).toLowerCase();
+    feedback(ok, 4, "hunt5", "Nope. Think simple.");
+  };
+  return;
+}
+
+if(state.stage === "hunt5"){
+  app.innerHTML = `
+    <div class="fade-in">
+      <h1>Lock 5</h1>
+      <p>Which hand gesture was required when singing Happy Birthday?</p>
+
+      <div class="divider"></div>
+
+      <div class="hint">
+        Three words.
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <input class="input mono" id="ans5" placeholder="three words…" autocomplete="off" />
+        <button class="btn good" id="check5">unlock</button>
+      </div>
+
+      <div id="msg" class="status"></div>
+      ${renderProgress()}
+
+      <div class="divider"></div>
+      <div class="row">
+        <button class="btn ghost small" id="back">back</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("back").onclick = () => setStage("hunt4");
+  document.getElementById("check5").onclick = () => {
+    const val = (document.getElementById("ans5").value || "").trim().toLowerCase();
+    const ok = val === String(CONFIG.code5).toLowerCase();
+
+    if(ok){
+      state.solved[5] = true;
+
+      // ✅ Force vault to open on NAME GRID after final lock
+      state.vaultView = { mode: "people", personKey: null };
+
+      saveState();
+      setStage("vault");
+    }else{
+      document.getElementById("msg").innerHTML =
+        `<span style="color:var(--bad)">Not quite.</span> Do the thing.`;
+    }
+  };
+  return;
+}
+
 
      if(state.stage === "vault"){
   const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
@@ -835,10 +919,11 @@ code5: "Salute the cake",
     }
 
     // Auto-open vault if all solved and they revisit
-    if(state.solved[1] && state.solved[2] && state.solved[3] && state.stage !== "vault"){
-      state.stage = "vault";
-      saveState();
-    }
+    if(state.solved[1] && state.solved[2] && state.solved[3] && state.solved[4] && state.solved[5] && state.stage !== "vault"){
+  state.stage = "vault";
+  if(!state.vaultView) state.vaultView = { mode: "people", personKey: null };
+  saveState();
+}
 
     render();
 
