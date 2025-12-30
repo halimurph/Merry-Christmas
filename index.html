@@ -210,6 +210,7 @@
 
 <script>
 (function(){
+  try{
   // ====== EDIT THESE (PERSONALIZE) ======
   const CONFIG = {
   recipientName: "family legend",
@@ -582,8 +583,23 @@ You don’t get a vote. It’s happening.`
     saveState();
   }
 
-  render();
+    render();
+  } catch (e) {
+    console.error(e);
+    const app = document.getElementById("app");
+    if (app) {
+      app.innerHTML = `
+        <h1 style="margin:0 0 10px;">Script crashed</h1>
+        <p style="color:#a8b0c6; line-height:1.6;">
+          Open DevTools Console to see the error.<br/>
+          <span style="opacity:.8">Most likely: a typo in CONFIG (quotes/backticks/braces).</span>
+        </p>
+        <pre style="white-space:pre-wrap; background:rgba(0,0,0,.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); color:#e8ecf7;">${'${String(e)}'}</pre>
+      `;
+    }
+  }
 })();
+
 </script>
 </body>
 </html>
