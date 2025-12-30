@@ -269,10 +269,10 @@ const CONFIG = {
   // ====== STATE ======
   const KEY = "nfc_gift_state_v1";
   const defaultState = {
-    stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
-    solved: {1:false,2:false,3:false},
-    opened: {memory:false, truth:false, next:false}
-  };
+  stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
+  solved: {1:false,2:false,3:false},
+  vaultView: { mode: "people", personKey: null } // people | gallery
+};
 
   let state = loadState();
   const app = document.getElementById("app");
@@ -280,10 +280,11 @@ const CONFIG = {
   const resetBtn = document.getElementById("resetBtn");
 
   resetBtn.addEventListener("click", () => {
-    localStorage.removeItem(KEY);
-    state = JSON.parse(JSON.stringify(defaultState));
-    render();
-  });
+  localStorage.removeItem(KEY);
+  state = JSON.parse(JSON.stringify(defaultState));
+  render();
+});
+
 
   function loadState(){
     try{
@@ -478,85 +479,114 @@ const CONFIG = {
     }
 
     if(state.stage === "vault"){
-      const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
-      app.innerHTML = `
-        <div class="fade-in">
-          <h1>Vault</h1>
-          <p>${allSolved ? "You earned this." : "You can open it anyway. The point wasn’t the locks."}</p>
+  const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
 
-          ${CONFIG.embedUrl ? `
-            <div class="divider"></div>
-            <div class="contentbox">
-              <p class="small" style="margin-bottom:10px;color:var(--muted)">Press play when you’re ready.</p>
-              <div style="position:relative; padding-top:56.25%;">
-                <iframe
-                  src="${escapeAttr(CONFIG.embedUrl)}"
-                  style="position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:14px;"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                  allowfullscreen
-                  title="Embedded message"
-                ></iframe>
-              </div>
+  // Ensure vaultView exists for older saved states
+  if(!state.vaultView) state.vaultView = { mode: "people", personKey: null };
+
+  const view = state.vaultView;
+
+  // ===== People list =====
+  if(view.mode === "people"){
+    app.innerHTML = `
+      <div class="fade-in">
+        <h1>Vault</h1>
+        <p>${allSolved ? "Pick a name." : "You can open it anyway. Pick a name."}</p>
+
+        <div class="divider"></div>
+
+        <div class="vault-grid">
+          ${CONFIG.people.map(p => `
+            <div class="drawer" id="person_${p.key}" role="button" tabindex="0">
+              <div class="lock">${p.photos.length} pic${p.photos.length === 1 ? "" : "s"}</div>
+              <h3>${escapeHtml(p.name)}</h3>
+              <p class="label">Open.</p>
             </div>
-          ` : ""}
-
-          <div class="divider"></div>
-
-          <div class="vault-grid">
-            ${drawer("memory", CONFIG.vault.memoryTitle, "Open the moment.", state.opened.memory)}
-            ${drawer("truth",  CONFIG.vault.truthTitle,  "Open what’s real.", state.opened.truth)}
-            ${drawer("next",   CONFIG.vault.nextTitle,   "Open what’s next.", state.opened.next)}
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="contentbox" id="vaultContent">
-            <p class="small" style="margin:0;color:var(--muted)">Choose a drawer.</p>
-          </div>
-
-          <div class="divider"></div>
-          <div class="row">
-            <button class="btn ghost small" id="back">back</button>
-            <button class="btn primary small" id="finish">close</button>
-          </div>
-
-          <div class="status">
-            <span class="mono" style="opacity:.7">access:</span>
-            <span style="opacity:.9">${allSolved ? "verified" : "unverified"}</span>
-          </div>
+          `).join("")}
         </div>
-      `;
 
-      document.getElementById("back").onclick = () => {
-        // go to last unsolved stage if any, else hunt3
-        if(!state.solved[1]) return setStage("hunt1");
-        if(!state.solved[2]) return setStage("hunt2");
-        if(!state.solved[3]) return setStage("hunt3");
-        setStage("hunt3");
-      };
-      document.getElementById("finish").onclick = () => setStage("intro");
+        <div class="divider"></div>
 
-      // drawer handlers
-      ["memory","truth","next"].forEach(key=>{
-        document.getElementById(`drawer_${key}`).onclick = () => openDrawer(key);
-      });
-      return;
-    }
-  }
-
-  function drawer(key, title, subtitle, opened){
-    return `
-      <div class="drawer" id="drawer_${key}" role="button" tabindex="0" aria-label="${escapeAttr(title)}">
-        <div class="lock">${opened ? "open" : "locked"}</div>
-        <h3>${escapeHtml(title)}</h3>
-        <p class="label">${escapeHtml(subtitle)}</p>
+        <div class="row">
+          <button class="btn ghost small" id="back">back</button>
+          <button class="btn primary small" id="finish">close</button>
+        </div>
       </div>
     `;
+
+    document.getElementById("back").onclick = () => {
+      if(!state.solved[1]) return setStage("hunt1");
+      if(!state.solved[2]) return setStage("hunt2");
+      if(!state.solved[3]) return setStage("hunt3");
+      setStage("hunt3");
+    };
+    document.getElementById("finish").onclick = () => setStage("intro");
+
+    CONFIG.people.forEach(p => {
+      document.getElementById(`person_${p.key}`).onclick = () => {
+        state.vaultView = { mode: "gallery", personKey: p.key };
+        saveState();
+        render();
+      };
+    });
+
+    return;
   }
 
-  function openDrawer(key){
-    state.opened[key] = true;
-    saveState();
+  // ===== Gallery view =====
+  if(view.mode === "gallery"){
+    const person = CONFIG.people.find(p => p.key === view.personKey);
+
+    if(!person){
+      state.vaultView = { mode: "people", personKey: null };
+      saveState();
+      render();
+      return;
+    }
+
+    app.innerHTML = `
+      <div class="fade-in">
+        <h1>${escapeHtml(person.name)}</h1>
+        <p>Choose a pic.</p>
+
+        <div class="divider"></div>
+
+        <div class="vault-grid">
+          ${person.photos.map((ph, idx) => `
+            <div class="drawer" id="pic_${idx}" role="button" tabindex="0">
+              <div class="lock">tap</div>
+              <h3>Pic ${idx + 1}</h3>
+              <p class="label">Open.</p>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <button class="btn ghost small" id="backToPeople">back</button>
+          <button class="btn primary small" id="finish">close</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("backToPeople").onclick = () => {
+      state.vaultView = { mode: "people", personKey: null };
+      saveState();
+      render();
+    };
+    document.getElementById("finish").onclick = () => setStage("intro");
+
+    person.photos.forEach((ph, idx) => {
+      document.getElementById(`pic_${idx}`).onclick = () => {
+        openPhotoModal(person.name, idx + 1, ph.src, ph.caption);
+      };
+    });
+
+    return;
+  }
+}
+
 
     const content = document.getElementById("vaultContent");
     let t="", b="";
@@ -603,6 +633,81 @@ const CONFIG = {
     state.stage = "vault";
     saveState();
   }
+    /* ===== Modal + Flip ===== */
+.modal{
+  position: fixed;
+  inset: 0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding: 22px;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+}
+.modal.on{ display:flex; }
+
+.modalCard{
+  width: min(820px, 100%);
+  border-radius: 20px;
+  border:1px solid rgba(232,236,247,.16);
+  background: linear-gradient(180deg, rgba(17,21,33,.98), rgba(15,19,32,.92));
+  box-shadow: 0 30px 90px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+
+.modalTopBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 14px 16px;
+  border-bottom:1px solid var(--line);
+}
+.modalTopBar .title{
+  font-size:12px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color: var(--muted);
+}
+
+.flipWrap{
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .55s ease;
+  perspective: 1200px;
+  min-height: 320px;
+}
+.flipWrap.flipped{ transform: rotateY(180deg); }
+
+.flipFace{ backface-visibility: hidden; }
+.flipBack{
+  position:absolute;
+  inset:0;
+  transform: rotateY(180deg);
+}
+
+.modalFront{ padding:22px; cursor:pointer; }
+.modalFront h2{ margin:0; font-size:18px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.modalFront p{ margin:10px 0 0; color:var(--text); }
+
+.modalBack{ display:flex; flex-direction: column; }
+.modalImgWrap{
+  width:100%;
+  aspect-ratio: 16/10;
+  background: rgba(0,0,0,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.modalImg{ width:100%; height:100%; object-fit: contain; }
+.modalCaption{
+  border-top:1px solid var(--line);
+  padding:14px 16px;
+  color: var(--text);
+  line-height:1.45;
+}
+
 
       render();
 } catch (e) {
