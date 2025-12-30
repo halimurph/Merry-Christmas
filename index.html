@@ -33,7 +33,7 @@
       justify-content:center;
       padding:24px;
     }
-    .wrap{width:min(900px, 100%); }
+    .wrap{width:min(900px, 100%)}
     .top{
       display:flex; align-items:center; justify-content:space-between;
       margin-bottom:14px;
@@ -87,16 +87,10 @@
       border-color: rgba(201,212,255,.25);
       background: rgba(201,212,255,.10);
     }
-    .btn.ghost{
-      background: transparent;
-    }
+    .btn.ghost{background: transparent}
     .btn.good{
       border-color: rgba(183,255,218,.25);
       background: rgba(183,255,218,.10);
-    }
-    .btn.bad{
-      border-color: rgba(255,183,200,.25);
-      background: rgba(255,183,200,.10);
     }
     .small{font-size:13px}
     .input{
@@ -126,9 +120,7 @@
       color: var(--muted);
       font-size: 12px;
     }
-    .progress{
-      display:flex; gap:8px; align-items:center;
-    }
+    .progress{display:flex; gap:8px; align-items:center}
     .step{
       width: 26px; height: 6px;
       border-radius: 999px;
@@ -145,14 +137,15 @@
       from{opacity:0; transform: translateY(6px)}
       to{opacity:1; transform: translateY(0)}
     }
+
+    /* Cards grid */
     .vault-grid{
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap:12px;
     }
-    @media (max-width:720px){
-      .vault-grid{grid-template-columns: 1fr}
-    }
+    @media (max-width:720px){ .vault-grid{grid-template-columns: 1fr} }
+
     .drawer{
       border:1px solid var(--line);
       border-radius: 16px;
@@ -160,7 +153,7 @@
       padding:14px;
       min-height: 92px;
       cursor:pointer;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      transition: transform .12s ease, background .12s ease;
       position: relative;
       overflow:hidden;
     }
@@ -174,23 +167,93 @@
       padding:6px 8px; border-radius: 999px;
       background: rgba(17,21,33,.45);
     }
-    .contentbox{
-      border:1px solid var(--line);
-      border-radius: 16px;
-      background: rgba(0,0,0,.12);
-      padding:16px;
-    }
+
     .footer{
       margin-top:12px;
       display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
       color: var(--muted);
       font-size:12px;
     }
-    a{color:var(--accent); text-decoration:none}
-    a:hover{text-decoration:underline}
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+
+    /* ===== Modal + Flip ===== */
+    .modal{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 22px;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+    }
+    .modal.on{ display:flex; }
+
+    .modalCard{
+      width: min(820px, 100%);
+      border-radius: 20px;
+      border:1px solid rgba(232,236,247,.16);
+      background: linear-gradient(180deg, rgba(17,21,33,.98), rgba(15,19,32,.92));
+      box-shadow: 0 30px 90px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+
+    .modalTopBar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 16px;
+      border-bottom:1px solid var(--line);
+    }
+    .modalTopBar .title{
+      font-size:12px;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      color: var(--muted);
+    }
+
+    .flipWrap{
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .55s ease;
+      perspective: 1200px;
+      min-height: 320px;
+      cursor:pointer;
+    }
+    .flipWrap.flipped{ transform: rotateY(180deg); }
+
+    .flipFace{ backface-visibility: hidden; }
+    .flipBack{
+      position:absolute;
+      inset:0;
+      transform: rotateY(180deg);
+    }
+
+    .modalFront{ padding:22px; }
+    .modalFront h2{ margin:0; font-size:18px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .modalFront p{ margin:10px 0 0; color:var(--text); }
+
+    .modalBack{ display:flex; flex-direction: column; }
+    .modalImgWrap{
+      width:100%;
+      aspect-ratio: 16/10;
+      background: rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .modalImg{ width:100%; height:100%; object-fit: contain; }
+    .modalCaption{
+      border-top:1px solid var(--line);
+      padding:14px 16px;
+      color: var(--text);
+      line-height:1.45;
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="top">
@@ -208,529 +271,473 @@
     </div>
   </div>
 
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Photo viewer">
+      <div class="modalTopBar">
+        <div class="title" id="modalTitle">PHOTO</div>
+        <button class="btn ghost small" id="closeModal">close</button>
+      </div>
+
+      <div class="flipWrap" id="flipWrap">
+        <div class="flipFace modalFront">
+          <h2 id="frontLabel">Pic</h2>
+          <p id="frontHint">tap to reveal</p>
+        </div>
+
+        <div class="flipFace flipBack modalBack">
+          <div class="modalImgWrap">
+            <img class="modalImg" id="modalImg" alt="Selected photo" />
+          </div>
+          <div class="modalCaption" id="modalCaption"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function(){
   try{
-  // ====== EDIT THESE (PERSONALIZE) ======
-const CONFIG = {
-  recipientName: "family legend",
-  code1: "snacks",
-  code2: "1",
-  code3: "chaos mode",
+    // ====== EDIT THESE (PERSONALIZE) ======
+    const CONFIG = {
+      recipientName: "family legend",
+      code1: "snacks",
+      code2: "1",
+      code3: "chaos mode",
 
-  people: [
-    {
-      key: "peachy",
-      name: "Peachy",
-      photos: [
-        { src: "peachy1.jpg", caption: "Peachy being Peachy." },
-        { src: "peachy2.jpg", caption: "Iconic. No notes." }
+      // Images are in repo ROOT (same folder as index.html)
+      people: [
+        { key:"peachy", name:"Peachy", photos:[
+          { src:"peachy1.jpg", caption:"Peachy being Peachy." },
+          { src:"peachy2.jpg", caption:"Iconic. No notes." }
+        ]},
+        { key:"kevin", name:"Kevin", photos:[
+          { src:"kevin1.jpg", caption:"Kevin in his natural habitat." }
+        ]},
+        { key:"rana", name:"Rana", photos:[
+          { src:"rana1.jpg", caption:"Main character energy." }
+        ]},
+        { key:"pat", name:"Pat", photos:[
+          { src:"pat1.jpg", caption:"Pat, holding the family together." }
+        ]},
+        { key:"karen", name:"Karen", photos:[
+          { src:"karen1.jpg", caption:"Queen behavior, always." }
+        ]},
+        { key:"grandpa", name:"Grandpa", photos:[
+          { src:"grandpa1.jpg", caption:"The original legend." },
+          { src:"grandpa2.jpg", caption:"Frame this immediately." }
+        ]}
       ]
-    },
-    {
-      key: "kevin",
-      name: "Kevin",
-      photos: [
-        { src: "kevin1.jpg", caption: "Kevin in his natural habitat." }
-      ]
-    },
-    {
-      key: "rana",
-      name: "Rana",
-      photos: [
-        { src: "rana1.jpg", caption: "Main character energy." }
-      ]
-    },
-    {
-      key: "pat",
-      name: "Pat",
-      photos: [
-        { src: "pat1.jpg", caption: "Pat, holding the family together." }
-      ]
-    },
-    {
-      key: "karen",
-      name: "Karen",
-      photos: [
-        { src: "karen1.jpg", caption: "Queen behavior, always." }
-      ]
-    },
-    {
-      key: "grandpa",
-      name: "Grandpa",
-      photos: [
-        { src: "grandpa1.jpg", caption: "The original legend." },
-        { src: "grandpa2.jpg", caption: "Frame this immediately." }
-      ]
+    };
+
+    // ====== STATE ======
+    const KEY = "nfc_gift_state_v2";
+    const defaultState = {
+      stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
+      solved: {1:false,2:false,3:false},
+      vaultView: { mode: "people", personKey: null } // people | gallery
+    };
+
+    let state = loadState();
+
+    const app = document.getElementById("app");
+    const pillText = document.getElementById("pillText");
+    const resetBtn = document.getElementById("resetBtn");
+
+    resetBtn.addEventListener("click", () => {
+      localStorage.removeItem(KEY);
+      state = JSON.parse(JSON.stringify(defaultState));
+      render();
+    });
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return JSON.parse(JSON.stringify(defaultState));
+        const parsed = JSON.parse(raw);
+        return {
+          ...defaultState,
+          ...parsed,
+          solved: {...defaultState.solved, ...(parsed.solved || {})},
+          vaultView: parsed.vaultView || defaultState.vaultView
+        };
+      }catch(e){
+        return JSON.parse(JSON.stringify(defaultState));
+      }
     }
-  ]
-};
+    function saveState(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
-  // ====== STATE ======
-  const KEY = "nfc_gift_state_v1";
-  const defaultState = {
-  stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
-  solved: {1:false,2:false,3:false},
-  vaultView: { mode: "people", personKey: null } // people | gallery
-};
-
-  let state = loadState();
-  const app = document.getElementById("app");
-  const pillText = document.getElementById("pillText");
-  const resetBtn = document.getElementById("resetBtn");
-
-  resetBtn.addEventListener("click", () => {
-  localStorage.removeItem(KEY);
-  state = JSON.parse(JSON.stringify(defaultState));
-  render();
-});
-
-
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      if(!raw) return JSON.parse(JSON.stringify(defaultState));
-      const parsed = JSON.parse(raw);
-      return {...defaultState, ...parsed};
-    }catch(e){
-      return JSON.parse(JSON.stringify(defaultState));
+    function setStage(stage){
+      state.stage = stage;
+      saveState();
+      render();
     }
-  }
-  function saveState(){
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
 
-  function setStage(stage){
-    state.stage = stage;
-    saveState();
-    render();
-  }
+    function progressCount(){
+      return (state.solved[1]?1:0) + (state.solved[2]?1:0) + (state.solved[3]?1:0);
+    }
 
-  function progressCount(){
-    return (state.solved[1]?1:0) + (state.solved[2]?1:0) + (state.solved[3]?1:0);
-  }
-
-  function renderProgress(){
-    const n = progressCount();
-    return `
-      <div class="status">
-        <div class="progress" aria-label="progress">
-          <div class="step ${n>=1?'on':''}"></div>
-          <div class="step ${n>=2?'on':''}"></div>
-          <div class="step ${n>=3?'on':''}"></div>
-        </div>
-        <div>${n}/3 unlocked</div>
-      </div>
-    `;
-  }
-
-  function render(){
-    const n = progressCount();
-    pillText.textContent = (state.stage === "vault") ? "vault open" : (n === 0 ? "begin" : `${n}/3 unlocked`);
-
-    if(state.stage === "intro"){
-      app.innerHTML = `
-        <div class="fade-in">
-          <h1>This is for ${escapeHtml(CONFIG.recipientName)}.</h1>
-          <p>Not everyone gets access. If you’re here, it’s because someone wanted you to find this.</p>
-
-          <div class="divider"></div>
-
-          <div class="hint">
-            One rule: don’t rush it.<br/>
-            If you try to “speedrun” this, you’ll miss what it’s for.
+    function renderProgress(){
+      const n = progressCount();
+      return `
+        <div class="status">
+          <div class="progress" aria-label="progress">
+            <div class="step ${n>=1?'on':''}"></div>
+            <div class="step ${n>=2?'on':''}"></div>
+            <div class="step ${n>=3?'on':''}"></div>
           </div>
-
-          <div class="divider"></div>
-
-          <div class="row">
-            <button class="btn primary" id="startBtn">start</button>
-            <button class="btn ghost" id="skipBtn" title="Skip straight to the vault (if you want)">skip</button>
-          </div>
-
-          ${renderProgress()}
+          <div>${n}/3 unlocked</div>
         </div>
       `;
-      document.getElementById("startBtn").onclick = () => setStage("hunt1");
-      document.getElementById("skipBtn").onclick = () => setStage("vault");
-      return;
     }
 
-    if(state.stage === "hunt1"){
-      app.innerHTML = `
-        <div class="fade-in">
-          <h1>Lock 1</h1>
-          <p>Choose a direction. Not the obvious one.</p>
+    function render(){
+      const n = progressCount();
+      pillText.textContent = (state.stage === "vault") ? "vault open" : (n === 0 ? "begin" : `${n}/3 unlocked`);
 
-          <div class="divider"></div>
+      if(state.stage === "intro"){
+        app.innerHTML = `
+          <div class="fade-in">
+            <h1>This is for ${escapeHtml(CONFIG.recipientName)}.</h1>
+            <p>Not everyone gets access. If you’re here, it’s because someone wanted you to find this.</p>
 
-          <div class="hint">
-            Answer with one word.<br/>
-            It’s the direction the light comes from when you stop staring at the noise.
+            <div class="divider"></div>
+
+            <div class="hint">
+              One rule: don’t rush it.<br/>
+              If you try to “speedrun” this, you’ll miss what it’s for.
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <button class="btn primary" id="startBtn">start</button>
+              <button class="btn ghost" id="skipBtn" title="Skip straight to the vault (if you want)">skip</button>
+            </div>
+
+            ${renderProgress()}
           </div>
+        `;
+        document.getElementById("startBtn").onclick = () => setStage("hunt1");
+        document.getElementById("skipBtn").onclick = () => setStage("vault");
+        return;
+      }
 
-          <div class="divider"></div>
+      if(state.stage === "hunt1"){
+        app.innerHTML = `
+          <div class="fade-in">
+            <h1>Lock 1</h1>
+            <p>Choose a direction. Not the obvious one.</p>
 
-          <div class="row">
-            <input class="input mono" id="ans1" placeholder="type here…" autocomplete="off" />
-            <button class="btn good" id="check1">unlock</button>
+            <div class="divider"></div>
+
+            <div class="hint">
+              Answer with one word.<br/>
+              It’s the direction the light comes from when you stop staring at the noise.
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <input class="input mono" id="ans1" placeholder="type here…" autocomplete="off" />
+              <button class="btn good" id="check1">unlock</button>
+            </div>
+
+            <div id="msg" class="status"></div>
+            ${renderProgress()}
+
+            <div class="divider"></div>
+            <div class="row">
+              <button class="btn ghost small" id="back">back</button>
+            </div>
           </div>
+        `;
+        document.getElementById("back").onclick = () => setStage("intro");
+        document.getElementById("check1").onclick = () => {
+          const val = (document.getElementById("ans1").value || "").trim().toLowerCase();
+          const ok = val === String(CONFIG.code1).toLowerCase();
+          feedback(ok, 1, "hunt2", "Close. Try simpler.");
+        };
+        return;
+      }
 
-          <div id="msg" class="status"></div>
-          ${renderProgress()}
+      if(state.stage === "hunt2"){
+        app.innerHTML = `
+          <div class="fade-in">
+            <h1>Lock 2</h1>
+            <p>This one’s about attention.</p>
 
-          <div class="divider"></div>
-          <div class="row">
-            <button class="btn ghost small" id="back">back</button>
+            <div class="divider"></div>
+
+            <div class="hint">
+              Enter the number that shows up when you think of the day this became real.
+              <br/><span style="opacity:.75">(If you’re unsure, guess. The point is the choice.)</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <input class="input mono" id="ans2" placeholder="a single number…" inputmode="numeric" autocomplete="off" />
+              <button class="btn good" id="check2">unlock</button>
+            </div>
+
+            <div id="msg" class="status"></div>
+            ${renderProgress()}
+
+            <div class="divider"></div>
+            <div class="row">
+              <button class="btn ghost small" id="back">back</button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+        document.getElementById("back").onclick = () => setStage("hunt1");
+        document.getElementById("check2").onclick = () => {
+          const val = (document.getElementById("ans2").value || "").trim().toLowerCase();
+          const ok = val === String(CONFIG.code2).toLowerCase();
+          feedback(ok, 2, "hunt3", "Not that. Try the number you didn’t want to say.");
+        };
+        return;
+      }
 
-      document.getElementById("back").onclick = () => setStage("intro");
-      document.getElementById("check1").onclick = () => {
-        const val = (document.getElementById("ans1").value || "").trim().toLowerCase();
-        const ok = val === CONFIG.code1.toLowerCase();
-        feedback(ok, 1, "hunt2", "Close. Try simpler.");
-      };
-      return;
-    }
+      if(state.stage === "hunt3"){
+        app.innerHTML = `
+          <div class="fade-in">
+            <h1>Lock 3</h1>
+            <p>Last one. Say it like you mean it.</p>
 
-    if(state.stage === "hunt2"){
-      app.innerHTML = `
-        <div class="fade-in">
-          <h1>Lock 2</h1>
-          <p>This one’s about attention.</p>
+            <div class="divider"></div>
 
-          <div class="divider"></div>
+            <div class="hint">
+              Two words. No punctuation.<br/>
+              It’s what you feel when the world goes quiet and you don’t need to perform.
+            </div>
 
-          <div class="hint">
-            Enter the number that shows up when you think of the day this became real.
-            <br/><span style="opacity:.75">(If you’re unsure, guess. The point is the choice.)</span>
+            <div class="divider"></div>
+
+            <div class="row">
+              <input class="input mono" id="ans3" placeholder="two words…" autocomplete="off" />
+              <button class="btn good" id="check3">unlock</button>
+            </div>
+
+            <div id="msg" class="status"></div>
+            ${renderProgress()}
+
+            <div class="divider"></div>
+            <div class="row">
+              <button class="btn ghost small" id="back">back</button>
+            </div>
           </div>
+        `;
+        document.getElementById("back").onclick = () => setStage("hunt2");
+        document.getElementById("check3").onclick = () => {
+          const val = (document.getElementById("ans3").value || "").trim().toLowerCase();
+          const ok = val === String(CONFIG.code3).toLowerCase();
+          if(ok){
+            state.solved[3] = true;
+            saveState();
+            setStage("vault");
+          }else{
+            document.getElementById("msg").innerHTML =
+              `<span style="color:var(--bad)">Not quite.</span> Try the gentlest version of the truth.`;
+          }
+        };
+        return;
+      }
 
-          <div class="divider"></div>
+      if(state.stage === "vault"){
+        const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
 
-          <div class="row">
-            <input class="input mono" id="ans2" placeholder="a single number…" inputmode="numeric" autocomplete="off" />
-            <button class="btn good" id="check2">unlock</button>
-          </div>
+        if(!state.vaultView) state.vaultView = { mode: "people", personKey: null };
+        const view = state.vaultView;
 
-          <div id="msg" class="status"></div>
-          ${renderProgress()}
+        if(view.mode === "people"){
+          app.innerHTML = `
+            <div class="fade-in">
+              <h1>Vault</h1>
+              <p>${allSolved ? "Pick a name." : "You can open it anyway. Pick a name."}</p>
 
-          <div class="divider"></div>
-          <div class="row">
-            <button class="btn ghost small" id="back">back</button>
-          </div>
-        </div>
-      `;
-      document.getElementById("back").onclick = () => setStage("hunt1");
-      document.getElementById("check2").onclick = () => {
-        const val = (document.getElementById("ans2").value || "").trim().toLowerCase();
-        const ok = val === CONFIG.code2.toLowerCase();
-        feedback(ok, 2, "hunt3", "Not that. Try the number you didn’t want to say.");
-      };
-      return;
-    }
+              <div class="divider"></div>
 
-    if(state.stage === "hunt3"){
-      app.innerHTML = `
-        <div class="fade-in">
-          <h1>Lock 3</h1>
-          <p>Last one. Say it like you mean it.</p>
+              <div class="vault-grid">
+                ${CONFIG.people.map(p => `
+                  <div class="drawer" id="person_${p.key}" role="button" tabindex="0">
+                    <div class="lock">${p.photos.length} pic${p.photos.length === 1 ? "" : "s"}</div>
+                    <h3>${escapeHtml(p.name)}</h3>
+                    <p class="label">Open.</p>
+                  </div>
+                `).join("")}
+              </div>
 
-          <div class="divider"></div>
+              <div class="divider"></div>
 
-          <div class="hint">
-            Two words. No punctuation.<br/>
-            It’s what you feel when the world goes quiet and you don’t need to perform.
-          </div>
+              <div class="row">
+                <button class="btn ghost small" id="back">back</button>
+                <button class="btn primary small" id="finish">close</button>
+              </div>
+            </div>
+          `;
 
-          <div class="divider"></div>
+          document.getElementById("back").onclick = () => {
+            if(!state.solved[1]) return setStage("hunt1");
+            if(!state.solved[2]) return setStage("hunt2");
+            if(!state.solved[3]) return setStage("hunt3");
+            setStage("hunt3");
+          };
+          document.getElementById("finish").onclick = () => setStage("intro");
 
-          <div class="row">
-            <input class="input mono" id="ans3" placeholder="two words…" autocomplete="off" />
-            <button class="btn good" id="check3">unlock</button>
-          </div>
+          CONFIG.people.forEach(p => {
+            const el = document.getElementById(`person_${p.key}`);
+            if(el){
+              el.onclick = () => {
+                state.vaultView = { mode: "gallery", personKey: p.key };
+                saveState();
+                render();
+              };
+            }
+          });
 
-          <div id="msg" class="status"></div>
-          ${renderProgress()}
-
-          <div class="divider"></div>
-          <div class="row">
-            <button class="btn ghost small" id="back">back</button>
-          </div>
-        </div>
-      `;
-      document.getElementById("back").onclick = () => setStage("hunt2");
-      document.getElementById("check3").onclick = () => {
-        const val = (document.getElementById("ans3").value || "").trim().toLowerCase();
-        const ok = val === CONFIG.code3.toLowerCase();
-        if(ok){
-          state.solved[3] = true;
-          saveState();
-          setStage("vault");
-        }else{
-          const msg = document.getElementById("msg");
-          msg.innerHTML = `<span style="color:var(--bad)">Not quite.</span> Try the gentlest version of the truth.`;
+          return;
         }
-      };
-      return;
+
+        if(view.mode === "gallery"){
+          const person = CONFIG.people.find(p => p.key === view.personKey);
+          if(!person){
+            state.vaultView = { mode: "people", personKey: null };
+            saveState();
+            render();
+            return;
+          }
+
+          app.innerHTML = `
+            <div class="fade-in">
+              <h1>${escapeHtml(person.name)}</h1>
+              <p>Choose a pic.</p>
+
+              <div class="divider"></div>
+
+              <div class="vault-grid">
+                ${person.photos.map((ph, idx) => `
+                  <div class="drawer" id="pic_${idx}" role="button" tabindex="0">
+                    <div class="lock">tap</div>
+                    <h3>Pic ${idx + 1}</h3>
+                    <p class="label">Flip it.</p>
+                  </div>
+                `).join("")}
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="row">
+                <button class="btn ghost small" id="backToPeople">back</button>
+                <button class="btn primary small" id="finish">close</button>
+              </div>
+            </div>
+          `;
+
+          document.getElementById("backToPeople").onclick = () => {
+            state.vaultView = { mode: "people", personKey: null };
+            saveState();
+            render();
+          };
+          document.getElementById("finish").onclick = () => setStage("intro");
+
+          person.photos.forEach((ph, idx) => {
+            const el = document.getElementById(`pic_${idx}`);
+            if(el){
+              el.onclick = () => openPhotoModal(person.name, idx + 1, ph.src, ph.caption);
+            }
+          });
+
+          return;
+        }
+      }
     }
 
-    if(state.stage === "vault"){
-  const allSolved = state.solved[1] && state.solved[2] && state.solved[3];
+    function openPhotoModal(personName, picNumber, src, caption){
+      const modal = document.getElementById("modal");
+      const flipWrap = document.getElementById("flipWrap");
+      const modalTitle = document.getElementById("modalTitle");
+      const frontLabel = document.getElementById("frontLabel");
+      const modalImg = document.getElementById("modalImg");
+      const modalCaption = document.getElementById("modalCaption");
 
-  // Ensure vaultView exists for older saved states
-  if(!state.vaultView) state.vaultView = { mode: "people", personKey: null };
+      modalTitle.textContent = `${personName} • PIC ${picNumber}`;
+      frontLabel.textContent = `Pic ${picNumber}`;
+      modalImg.src = src;
+      modalCaption.textContent = caption || "";
 
-  const view = state.vaultView;
+      flipWrap.classList.remove("flipped");
+      modal.classList.add("on");
 
-  // ===== People list =====
-  if(view.mode === "people"){
-    app.innerHTML = `
-      <div class="fade-in">
-        <h1>Vault</h1>
-        <p>${allSolved ? "Pick a name." : "You can open it anyway. Pick a name."}</p>
+      flipWrap.onclick = () => flipWrap.classList.toggle("flipped");
+    }
 
-        <div class="divider"></div>
+    function closePhotoModal(){
+      const modal = document.getElementById("modal");
+      const flipWrap = document.getElementById("flipWrap");
+      const modalImg = document.getElementById("modalImg");
+      const modalCaption = document.getElementById("modalCaption");
 
-        <div class="vault-grid">
-          ${CONFIG.people.map(p => `
-            <div class="drawer" id="person_${p.key}" role="button" tabindex="0">
-              <div class="lock">${p.photos.length} pic${p.photos.length === 1 ? "" : "s"}</div>
-              <h3>${escapeHtml(p.name)}</h3>
-              <p class="label">Open.</p>
-            </div>
-          `).join("")}
-        </div>
+      modal.classList.remove("on");
+      flipWrap.classList.remove("flipped");
+      modalImg.src = "";
+      modalCaption.textContent = "";
+    }
 
-        <div class="divider"></div>
+    document.getElementById("closeModal").onclick = closePhotoModal;
+    document.getElementById("modal").addEventListener("click", (e) => {
+      if(e.target && e.target.id === "modal") closePhotoModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      const modal = document.getElementById("modal");
+      if(e.key === "Escape" && modal.classList.contains("on")) closePhotoModal();
+    });
 
-        <div class="row">
-          <button class="btn ghost small" id="back">back</button>
-          <button class="btn primary small" id="finish">close</button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById("back").onclick = () => {
-      if(!state.solved[1]) return setStage("hunt1");
-      if(!state.solved[2]) return setStage("hunt2");
-      if(!state.solved[3]) return setStage("hunt3");
-      setStage("hunt3");
-    };
-    document.getElementById("finish").onclick = () => setStage("intro");
-
-    CONFIG.people.forEach(p => {
-      document.getElementById(`person_${p.key}`).onclick = () => {
-        state.vaultView = { mode: "gallery", personKey: p.key };
+    function feedback(ok, lockNum, nextStage, wrongCopy){
+      const msg = document.getElementById("msg");
+      if(ok){
+        state.solved[lockNum] = true;
         saveState();
-        render();
-      };
-    });
-
-    return;
-  }
-
-  // ===== Gallery view =====
-  if(view.mode === "gallery"){
-    const person = CONFIG.people.find(p => p.key === view.personKey);
-
-    if(!person){
-      state.vaultView = { mode: "people", personKey: null };
-      saveState();
-      render();
-      return;
+        msg.innerHTML = `<span style="color:var(--ok)">Unlocked.</span> Don’t rush.`;
+        setTimeout(()=> setStage(nextStage), 520);
+      }else{
+        msg.innerHTML = `<span style="color:var(--bad)">No.</span> ${wrongCopy}`;
+      }
     }
 
-    app.innerHTML = `
-      <div class="fade-in">
-        <h1>${escapeHtml(person.name)}</h1>
-        <p>Choose a pic.</p>
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      })[s]);
+    }
 
-        <div class="divider"></div>
-
-        <div class="vault-grid">
-          ${person.photos.map((ph, idx) => `
-            <div class="drawer" id="pic_${idx}" role="button" tabindex="0">
-              <div class="lock">tap</div>
-              <h3>Pic ${idx + 1}</h3>
-              <p class="label">Open.</p>
-            </div>
-          `).join("")}
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <button class="btn ghost small" id="backToPeople">back</button>
-          <button class="btn primary small" id="finish">close</button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById("backToPeople").onclick = () => {
-      state.vaultView = { mode: "people", personKey: null };
+    // Auto-open vault if all solved and they revisit
+    if(state.solved[1] && state.solved[2] && state.solved[3] && state.stage !== "vault"){
+      state.stage = "vault";
       saveState();
-      render();
-    };
-    document.getElementById("finish").onclick = () => setStage("intro");
+    }
 
-    person.photos.forEach((ph, idx) => {
-      document.getElementById(`pic_${idx}`).onclick = () => {
-        openPhotoModal(person.name, idx + 1, ph.src, ph.caption);
-      };
-    });
+    render();
 
-    return;
-  }
-}
-
-
-    const content = document.getElementById("vaultContent");
-    let t="", b="";
-    if(key==="memory"){ t = CONFIG.vault.memoryTitle; b = CONFIG.vault.memoryBody; }
-    if(key==="truth"){ t = CONFIG.vault.truthTitle; b = CONFIG.vault.truthBody; }
-    if(key==="next"){ t = CONFIG.vault.nextTitle; b = CONFIG.vault.nextBody; }
-
-    content.innerHTML = `
-      <h2 style="margin:0 0 8px; font-size:18px; letter-spacing:-.01em;">${escapeHtml(t)}</h2>
-      <p style="white-space:pre-wrap; margin:0; color:var(--text); line-height:1.6;">${escapeHtml(b)}</p>
-    `;
-
-    // Update lock badges without full rerender
-    document.querySelector(`#drawer_${key} .lock`).textContent = "open";
-  }
-
-  function feedback(ok, lockNum, nextStage, wrongCopy){
-    const msg = document.getElementById("msg");
-    if(ok){
-      state.solved[lockNum] = true;
-      saveState();
-      msg.innerHTML = `<span style="color:var(--ok)">Unlocked.</span> Don’t rush.`;
-      setTimeout(()=> setStage(nextStage), 520);
-    }else{
-      msg.innerHTML = `<span style="color:var(--bad)">No.</span> ${wrongCopy}`;
+  } catch (e) {
+    console.error(e);
+    const app = document.getElementById("app");
+    const pill = document.getElementById("pillText");
+    if (pill) pill.textContent = "error";
+    if (app) {
+      app.innerHTML = `
+        <div style="padding:22px">
+          <h1 style="margin:0 0 10px;">Script crashed</h1>
+          <p style="color:#a8b0c6; line-height:1.6; margin:0 0 12px;">
+            Your JS is failing, so the page content never renders.
+            <br/>Here’s the exact error:
+          </p>
+          <pre style="white-space:pre-wrap; background:rgba(0,0,0,.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); color:#e8ecf7; margin:0;">${String(e)}</pre>
+        </div>
+      `;
     }
   }
-
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    })[s]);
-  }
-  function escapeAttr(str){
-    return escapeHtml(str).replace(/`/g, "&#96;");
-  }
-
-  // Auto-mark prior locks if user skipped around
-  // (if they return to a lock after solving, keep it solved)
-  // Nothing fancy needed—render() uses state.
-
-  // Set stage to vault automatically if all solved
-  if(state.solved[1] && state.solved[2] && state.solved[3] && state.stage !== "vault"){
-    state.stage = "vault";
-    saveState();
-  }
-    /* ===== Modal + Flip ===== */
-.modal{
-  position: fixed;
-  inset: 0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding: 22px;
-  background: rgba(0,0,0,.62);
-  backdrop-filter: blur(6px);
-  z-index: 9999;
-}
-.modal.on{ display:flex; }
-
-.modalCard{
-  width: min(820px, 100%);
-  border-radius: 20px;
-  border:1px solid rgba(232,236,247,.16);
-  background: linear-gradient(180deg, rgba(17,21,33,.98), rgba(15,19,32,.92));
-  box-shadow: 0 30px 90px rgba(0,0,0,.6);
-  overflow:hidden;
-}
-
-.modalTopBar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding: 14px 16px;
-  border-bottom:1px solid var(--line);
-}
-.modalTopBar .title{
-  font-size:12px;
-  letter-spacing:.22em;
-  text-transform:uppercase;
-  color: var(--muted);
-}
-
-.flipWrap{
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform .55s ease;
-  perspective: 1200px;
-  min-height: 320px;
-}
-.flipWrap.flipped{ transform: rotateY(180deg); }
-
-.flipFace{ backface-visibility: hidden; }
-.flipBack{
-  position:absolute;
-  inset:0;
-  transform: rotateY(180deg);
-}
-
-.modalFront{ padding:22px; cursor:pointer; }
-.modalFront h2{ margin:0; font-size:18px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
-.modalFront p{ margin:10px 0 0; color:var(--text); }
-
-.modalBack{ display:flex; flex-direction: column; }
-.modalImgWrap{
-  width:100%;
-  aspect-ratio: 16/10;
-  background: rgba(0,0,0,.18);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.modalImg{ width:100%; height:100%; object-fit: contain; }
-.modalCaption{
-  border-top:1px solid var(--line);
-  padding:14px 16px;
-  color: var(--text);
-  line-height:1.45;
-}
-
-
-      render();
-} catch (e) {
-  console.error(e);
-  const app = document.getElementById("app");
-  const pill = document.getElementById("pillText");
-  if (pill) pill.textContent = "error";
-  if (app) {
-    app.innerHTML = `
-      <div style="padding:22px">
-        <h1 style="margin:0 0 10px;">Script crashed</h1>
-        <p style="color:#a8b0c6; line-height:1.6; margin:0 0 12px;">
-          Your JS is failing, so the page content never renders.
-          <br/>Here’s the exact error:
-        </p>
-        <pre style="white-space:pre-wrap; background:rgba(0,0,0,.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); color:#e8ecf7; margin:0;">${String(e)}</pre>
-      </div>
-    `;
-  }
-}
 })();
-
-
 </script>
 </body>
 </html>
