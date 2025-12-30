@@ -410,10 +410,10 @@ x<!doctype html>
     // ====== STATE ======
     const KEY = "nfc_gift_state_v3";
     const defaultState = {
-      stage: "intro", // intro | hunt1 | hunt2 | hunt3 | vault
-      solved: {1:false,2:false,3:false},
-      vaultView: { mode: "gallery", personKey: "grandpa" } // people | gallery
-    };
+  stage: "hunt1", // ✅ start on questions
+  solved: {1:false,2:false,3:false},
+  vaultView: { mode: "people", personKey: null } // ✅ vault opens to name cards
+};
 
     let state = loadState();
 
@@ -440,9 +440,6 @@ x<!doctype html>
         };
 
         // Force default to Grandpa gallery if missing
-        if(!merged.vaultView || !merged.vaultView.personKey){
-          merged.vaultView = { mode: "gallery", personKey: "grandpa" };
-        }
         return merged;
       }catch(e){
         return JSON.parse(JSON.stringify(defaultState));
@@ -598,7 +595,7 @@ x<!doctype html>
             <div class="divider"></div>
 
             <div class="row">
-              <input class="input mono" id="ans3" placeholder="two words…" autocomplete="off" />
+              <input class="input mono" id="ans3" placeholder="three words…" autocomplete="off" />
               <button class="btn good" id="check3">unlock</button>
             </div>
 
