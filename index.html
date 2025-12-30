@@ -217,27 +217,53 @@ const CONFIG = {
   code1: "snacks",
   code2: "1",
   code3: "chaos mode",
-  vault: {
-    memoryTitle: "A memory",
-    memoryBody: `There’s a very specific family vibe:
-Someone says something harmless…
-someone else takes it too far…
-and suddenly we’re laughing so hard we forget what we were even doing.
 
-That’s the good stuff. That’s us.`,
-    truthTitle: "A truth",
-    truthBody: `You’re one of the reasons being with our family feels like home.
-Like—no matter what changes, you’re still you, and that makes everything feel safe (even when it’s loud).`,
-    nextTitle: "What’s next",
-    nextBody: `Next time I see you, I’m collecting:
-1) a new photo together
-2) a new inside joke
-3) a new snack obsession
-
-You don’t get a vote. It’s happening.`
-  },
-  // Optional: embed audio/video (leave blank to hide)
-  embedUrl: ""
+  people: [
+    {
+      key: "peachy",
+      name: "Peachy",
+      photos: [
+        { src: "peachy1.jpg", caption: "Peachy being Peachy." },
+        { src: "peachy2.jpg", caption: "Iconic. No notes." }
+      ]
+    },
+    {
+      key: "kevin",
+      name: "Kevin",
+      photos: [
+        { src: "kevin1.jpg", caption: "Kevin in his natural habitat." }
+      ]
+    },
+    {
+      key: "rana",
+      name: "Rana",
+      photos: [
+        { src: "rana1.jpg", caption: "Main character energy." }
+      ]
+    },
+    {
+      key: "pat",
+      name: "Pat",
+      photos: [
+        { src: "pat1.jpg", caption: "Pat, holding the family together." }
+      ]
+    },
+    {
+      key: "karen",
+      name: "Karen",
+      photos: [
+        { src: "karen1.jpg", caption: "Queen behavior, always." }
+      ]
+    },
+    {
+      key: "grandpa",
+      name: "Grandpa",
+      photos: [
+        { src: "grandpa1.jpg", caption: "The original legend." },
+        { src: "grandpa2.jpg", caption: "Frame this immediately." }
+      ]
+    }
+  ]
 };
 
   // ====== STATE ======
