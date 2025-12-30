@@ -1,5 +1,4 @@
 <!doctype html>
-document.getElementById("pillText").textContent = "js running";
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -213,7 +212,7 @@ document.getElementById("pillText").textContent = "js running";
 (function(){
   try{
   // ====== EDIT THESE (PERSONALIZE) ======
-  const CONFIG = {
+const CONFIG = {
   recipientName: "family legend",
   code1: "snacks",
   code2: "1",
@@ -226,11 +225,9 @@ someone else takes it too far…
 and suddenly we’re laughing so hard we forget what we were even doing.
 
 That’s the good stuff. That’s us.`,
-
     truthTitle: "A truth",
     truthBody: `You’re one of the reasons being with our family feels like home.
 Like—no matter what changes, you’re still you, and that makes everything feel safe (even when it’s loud).`,
-
     nextTitle: "What’s next",
     nextBody: `Next time I see you, I’m collecting:
 1) a new photo together
@@ -239,12 +236,9 @@ Like—no matter what changes, you’re still you, and that makes everything fee
 
 You don’t get a vote. It’s happening.`
   },
+  // Optional: embed audio/video (leave blank to hide)
   embedUrl: ""
 };
-
-    // Optional: embed audio/video (leave blank to hide)
-    embedUrl: "" // ex: "https://www.youtube.com/embed/VIDEO_ID" or Vimeo embed
-  };
 
   // ====== STATE ======
   const KEY = "nfc_gift_state_v1";
